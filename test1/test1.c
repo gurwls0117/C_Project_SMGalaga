@@ -14,6 +14,8 @@
 
 int score_i = 0;
 int life = 1;
+int block_array[21][14]; 
+
 
 typedef struct bullet {//총알의 위치를 알려줄 구조체
     int x, y;
