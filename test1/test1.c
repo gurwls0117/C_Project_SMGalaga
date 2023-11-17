@@ -27,8 +27,57 @@ int return_gameover = 0; //게임 다시시작, 1이 되면 게임 다시 시작
 int life = 1; //플레이어의 생명
 int block_array[21][14]; //게임판
 int score_plus = 0;
+int select_stage;
 enum { HIDDEN, SHOW };
 
+void cursor(int n) // 커서 보이기 & 숨기기
+{
+    HANDLE hConsole;
+    CONSOLE_CURSOR_INFO ConsoleCursor;
+
+    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+
+    ConsoleCursor.bVisible = n;
+    ConsoleCursor.dwSize = 1;
+    SetConsoleCursorInfo(hConsole, &ConsoleCursor);
+}
+typedef struct bullet {//총알의 위치를 알려줄 구조체
+    int x, y;
+} bullet;
+
+struct {
+    BOOL exist;
+    int x, y;
+}Bullet[3];
+
+typedef struct user_stat {// 유저의 상태를 알려줄 구조체
+    int x, y;//위치
+    int life;//목숨
+    int chk;//총알의 발사 여부
+    bullet bullet;//각각의 총알
+}user_stat;
+
+typedef struct boss_stat {// 보스의 상태를 알려줄 구조체
+    int x, y;//위치
+    int life;//목숨
+    int chk;//총알의 발사 여부
+    bullet bullet;//각각의 총알
+}boss_stat;
+
+struct user_stat User;
+struct boss_stat Boss;
+
+void gotoxy(int x, int y)
+{
+    COORD pos = { x, y };
+    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), pos);
+}
+
+void gotoxy(int a, int b);
+void cursor(int n);
+void boss(int x, int y);
+void player(int x, int y);
+void menu();
 
 void setcolor(int color, int bgcolor)
 {
@@ -332,7 +381,7 @@ int moving_bar(int left, int right, int up_down)
     int ch, temp_l, temp_r, temp_up_down;  //전 위치를 기억, 움직인 잔상을 지우기 위해
     for (i = left; i <= right; i++)    //쟁반의 길이, 위치 표시
         block_array[up_down][i] = 6;
-    ch = getch();        //키 입력
+    ch = _getch();        //키 입력
     switch (ch) {
     case LEFT:        //왼쪽으로 이동
         if (left == 1) {      //쟁반의 왼쪽 끝으로 이동할 경우 더이상 움직이지 못하게 함
@@ -398,60 +447,193 @@ int moving_bar(int left, int right, int up_down)
         break;
     }
 }
-
-void cursor(int n) // 커서 보이기 & 숨기기
+int clear_check(int true_false)
 {
-    HANDLE hConsole;
-    CONSOLE_CURSOR_INFO ConsoleCursor;
+    int temp_array[200];    //남은 벽돌을 저장
+    int i, j, ch;
+    int k = 0;       //temp_array에 0부터 증가시켜 배열에 2를 넣음
+    for (i = 0; i < 21; i++)
+    {
+        for (j = 0; j < 14; j++)
+        {
+            if (block_array[i][j] == 2)
+            {
+                temp_array[k] = 2;
+                k++;
+            }
+        }
+    }
+    if (temp_array[0] != 2)   //배열에 2가 없으면 게임 클리어
+    {
+        gotoxy(6, 15);
+        printf("===============\n");
+        gotoxy(6, 16);
+        printf("   C L E A R\n");
+        gotoxy(6, 17);
+        printf("===============\n");
+        k = 0;      //k값 초기화
+        ch = _getch();
+    }
+    return k;
 
-    hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-
-    ConsoleCursor.bVisible = n;
-    ConsoleCursor.dwSize = 1;
-    SetConsoleCursorInfo(hConsole, &ConsoleCursor);
 }
-typedef struct bullet {//총알의 위치를 알려줄 구조체
-    int x, y;
-} bullet;
-
-struct {
-    BOOL exist;
-    int x, y;
-}Bullet[3];
-
-typedef struct user_stat {// 유저의 상태를 알려줄 구조체
-    int x, y;//위치
-    int life;//목숨
-    int chk;//총알의 발사 여부
-    bullet bullet;//각각의 총알
-}user_stat;
-
-typedef struct boss_stat {// 보스의 상태를 알려줄 구조체
-    int x, y;//위치
-    int life;//목숨
-    int chk;//총알의 발사 여부
-    bullet bullet;//각각의 총알
-}boss_stat;
-
-struct user_stat User;
-struct boss_stat Boss;
-
-void gotoxy(int x, int y)
+int stage_level(int a)
 {
-    COORD Pos = { x, y };
-    SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), Pos);
+    int i;
+    switch (a)
+    {
+    case 1:  //Stage 1
+        bar_left = 4;     //쟁반의 왼쪽 위치
+        bar_right = 7;    //쟁반의 오른쪽 위치, 배열의 4,5,6,7를 4로 만들어 4칸짜리 쟁반을 만듦
+        Time = 150;     //게임 속도 지정
+        break;
+    }
+
+}
+int stage(int a)
+{
+    int i;
+    switch (a)
+    {
+    case 1:  //Stage 1
+        bar_left = 4;     //쟁반의 왼쪽 위치
+        bar_right = 7;    //쟁반의 오른쪽 위치, 배열의 4,5,6,7를 4로 만들어 4칸짜리 쟁반을 만듦
+        gotoxy(0, 9);
+        setcolor(0, 15);
+        printf("STAGE 1");
+        gotoxy(0, 10);
+        display_bar(bar_left, bar_right);
+        for (i = 1; i < 13; i++)   //벽돌 위치/
+            block_array[1][i] = 2;
+        for (i = 1; i < 13; i++)
+            block_array[2][i] = 2;
+        three_block(1);
+        Time = 150;     //게임 속도 지정
+        break;
+    }
+
+}
+int Score(int score)
+{
+    score = score + score_plus + 10;  //점수 표시, 연속으로 벽돌에 맞을 경우 score_plus를 1씩 증가 시켜 점수에 추가
+    score_plus++;
+    return score;
+}
+int game_over()
+{
+    char ch;
+    gotoxy(6, 15);
+    printf("===============\n");
+    gotoxy(6, 16);
+    printf("   Game Over\n");
+    gotoxy(6, 17);
+    printf("===============\n");
+    gotoxy(4, 19);
+    printf("Do you wanna re-game?[y/n] : ");
+    fflush(stdin);
+    scanf_s("%c", &ch);
+    if (ch == 'y') {    //y가 입력 되면 게임 다시 시작
+        fflush(stdin);
+        return_gameover = 1;
+    }
+    else      //y이외의 값이 입력 되었을 경우 프로그램 종료
+        exit(1);
+}
+int init_variable()    //전역변수 초기화
+{
+    int k, l;
+    ax = -1, ay = -1;
+    ab_x, ab_y;
+    pre_x, pre_y;
+    bar_up_down = 19;
+    score_i = 0;
+    score_plus = 0;
+    return_gameover = 0;
+    for (k = 0; k < 21; k++)  //게임판 배열 초기화
+    {
+        if (k == 0 || k == 20)
+        {
+            for (l = 0; l < 14; l++)
+                block_array[k][l] = 1;
+        }
+        else
+        {
+            for (l = 0; l < 14; l++)
+            {
+                if (l == 0 || l == 13)
+                    block_array[k][l] = 1;
+                else
+                    block_array[k][l] = 0;
+            }
+        }
+    }
+}
+int three_block(int n)    //3번 맞아야 없어지는 블록을 n개수 만큼 랜덤 위치에 생성
+{
+    int i, x, y;
+    randomize();
+    for (i = 1; i <= n; i++)
+    {
+        x = rand() % 15 + 1;    //15줄 안 임의의 값 x
+        y = rand() % 12 + 1;    //13칸 중 임의의 값 y
+        block_array[x][y] = 4;  //x,y좌표에 4입력
+    }
 }
 
-void gotoxy(int a, int b);
-void cursor(int n);
-void boss(int x, int y);
-void player(int x, int y);
-void menu();
 
 int main() {
     cursor(0); //커서 지우기(0)으로 값 초기화.
     srand((unsigned)time(0));
     menu();
+    int i, j;
+    char keytemp;
+start:       //Game over되어 재시작을 할경우 이 위치에서 다시 시작
+    init_variable();    //게임을 다시 시작할 경우 모든 전역 변수 초기화
+    intro();
+    for (i = select_stage; i <= 10; i++) //시작탄이 선택 되면 탄이 클리어된 후 다음 탄으로 이동
+    {
+        init();
+        stage(i);
+        background();
+        gotoxy(0, 10);
+        CursorView(HIDDEN);   //커서를 숨김
+        show_all();     //게임판의 모든것을 표시
+        while (1)
+        {
+            j = 1;    //클리어 체크 확인, j가 0이되면 클리어
+            block_array[0][0] = 1;
+            if (kbhit()) {  //방향키가 입력되었을 경우 쟁반을 움직임
+                keytemp = _getch();
+                moving_bar(bar_left, bar_right, bar_up_down);
+            }
+            gotoxy(0, 10);
+            show_all();    //쟁반을 움직인후 게임판을 다시 출력
+            clear_check(j);
+            j = clear_check(j);  //리턴값을 반환, j가 0이면 stage 종료, 다음 스테이지 이동
+            if (j == 0)
+                if (i == 10)   //마지막 탄을 클리어 할경우 다음을 표시 후 게임 종료
+                {
+                    gotoxy(6, 15);
+                    printf("===============\n");
+                    gotoxy(6, 16);
+                    printf("A L L   C L E A R\n");
+                    gotoxy(6, 17);
+                    printf("===============\n");
+                    break;
+                }
+                else
+                    break;
+            Sleep(Time);
+            if (return_gameover == 1) { //게임오버 되어 y가 입력 되면 다시 시작
+                system("cls");
+                return_gameover = 0; //다음의 게임 진행을 위해 값을 0으로 초기화
+                life = 1;    //생명 초기화
+                goto start;
+            }  //start위치로 이동
+            moving_ball(ab_x, ab_y); //공을 움직임
+        }
+
+    }
     return 0;
 }
 
