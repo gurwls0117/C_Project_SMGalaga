@@ -113,114 +113,9 @@ void help() {//도움말
     gotoxy(12, 23); system("pause");
 }
 
-void menu() { // 메뉴 고르기
-    int a;
-    //system("mode CON COLS=60 LINES=50");//콘솔창 크기 조절
-    // int m()s
-
-
-    PlaySound(TEXT("C:\\rokman.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP); // BGM 재생 부분
-
-    while (1) {
-        system("cls");
-        printf("     _______.     ___      .__   __.   _______    .___  ___. ____    ____  __    __  .__   __.   _______ \n");
-        printf("    /       |    /   Y     |  Y |  |  /  _____|   |   Y/   | Y   Y  /   / |  |  |  | |  Y |  |  /  _____|\n");
-        printf("   |   (----`   /  ^  Y    |   Y|  | |  |  __     |  Y  /  |  Y   Y/   /  |  |  |  | |   Y|  | |  |  __  \n");
-        printf("    Y   Y      /  /_Y  Y   |  . `  | |  | |_ |    |  |Y/|  |   Y_    _/   |  |  |  | |  . `  | |  | |_ | \n");
-        printf(".----)   |    /  _____  Y  |  |Y   | |  |__| |    |  |  |  |     |  |     |  `--'  | |  |Y   | |  |__| | \n");
-        printf("|_______/    /__/     Y__Y |__| Y__|  Y______|    |__|  |__|     |__|      Y______/  |__| Y__|  Y______| \n");
-        printf("                                                                                                         \n");
-
-        printf("  _______      ___       __          ___       _______      ___      \n");
-        printf(" /  _____|    /   Y     |  |        /   Y     /  _____|    /   Y     \n");
-        printf("|  |  __     /  ^  Y    |  |       /  ^  Y   |  |  __     /  ^  Y    \n");
-        printf("|  | |_ |   /  /_Y  Y   |  |      /  /_Y  Y  |  | |_ |   /  /_Y  Y   \n");
-        printf("|  |__| |  /  _____  Y  |  `----./  _____  Y |  |__| |  /  _____  Y  \n");
-        printf(" Y______| /__/     Y__Y |_______/__/     Y__Y Y______| /__/     Y__Y \n");
-
-        printf("                         \n");
-        printf("*******************************\n");
-        printf("*          1.게임시작         *\n");
-        printf("*          2.게임방법         *\n");
-        printf("*          3.끝내기           *\n");
-        printf("*******************************\n");
-        scanf_s("%d", &a);
-    k:
-        if (a == 1) {
-            printf("게임을 시작하겠습니다");
-            system("cls");
-            break;
-        }
-        else if (a == 2)
-            help();
-        else if (a == 3)
-            break;
-        else {
-            printf("잘못된 숫자를 누르셨습니다. 다시한번 더 입력해주세요.\n");
-            scanf_s("%d", &a);
-            goto k;
-        }
-    }
-}
-
-void draw_rectangle(int r, int c)
-{
-
-    int i, j;
-
-    unsigned char a = 0xa6, b[7];
-
-
-
-    for (i = 1; i < 7; i++)
-
-        b[i] = 0xa0 + i;
-
-    printf("%c%c", a, b[3]);
-
-    for (i = 0; i < c; i++)
-
-        printf("%c%c", a, b[1]);
-
-
-
-    printf("%c%c", a, b[4]);
-
-    printf("\n");
-
-    for (i = 0; i < r; i++)
-
-    {
-
-        printf("%c%c", a, b[2]);
-
-        for (j = 0; j < c; j++)
-
-            printf(" ");
-
-        printf("%c%c", a, b[2]);
-
-        printf("\n");
-
-    }
-
-    printf("%c%c", a, b[6]);
-
-    for (i = 0; i < c; i++)
-
-        printf("%c%c", a, b[1]);
-
-    printf("%c%c", a, b[5]);
-
-    printf("\n");
-
-}
-
-//기존 단순 좌우 이동에서 kbhit과 getch 그리고 IsKeyDown 함수를 따로 선언해 키보드 입력을 받아 움직인다.
-//플레이어의 이동과 적의 생성 그리고 피격 까지 모두 main함수 안에 선언
-//게임이 작동되는 방식을 구조체를 따로 선언하여 전역변수로 활용
 void playgame()
 {
+
     int ch;
     int i, j;
     BOOL bFound;
@@ -232,6 +127,9 @@ void playgame()
     fx = 60;
     bx = -1;
     Score = 0;
+
+    PlaySound(TEXT("C:\\ninja_gaiden.wav"), NULL, SND_FILENAME | SND_ASYNC); // BGM 재생 부분
+
     for (count = 0;; count++) //for문에서 조건식을 생략하여 무한반복을 시킨다.
     {
         // 좌우 이동 처리
@@ -376,7 +274,7 @@ void playgame()
         // 적군 총알과 아군의 충돌 판정
         for (i = 0; i < MAXBALL; i++) //적의 총알에 맞았을때
         {
-            if (Ball[i].exist == FALSE) continue;// Ball배열이 FALSE면 진행
+            if (Ball[i].exist == FALSE) continue;// Ball배열이 FALSE면 진행 
             if (Ball[i].y == 23 && abs(Ball[i].x - fx) <= 2) //여기서 abs 함수는 인자로 들어온 int 타입의?num의 절대값을 반환하는 함수
             {//Ball의 y위치가 23(게임판의 제일 바닥) Ball의 x의 위치와 플레이어의 위치fx 가 2의 차이가 나면 
                 gotoxy(fx - 3, 21); puts("   .   ");
@@ -436,10 +334,122 @@ end:
     getchar();
 }
 
+void menu() { // 메뉴 고르기
+    int a;
+    //system("mode CON COLS=60 LINES=50");//콘솔창 크기 조절
+    // int m()s
+
+    PlaySound(TEXT("C:\\rokman.wav"), NULL, SND_FILENAME | SND_ASYNC); // BGM 재생 부분
+
+    while (1) {
+        system("cls");
+        printf("     _______.     ___      .__   __.   _______    .___  ___. ____    ____  __    __  .__   __.   _______ \n");
+        printf("    /       |    /   Y     |  Y |  |  /  _____|   |   Y/   | Y   Y  /   / |  |  |  | |  Y |  |  /  _____|\n");
+        printf("   |   (----`   /  ^  Y    |   Y|  | |  |  __     |  Y  /  |  Y   Y/   /  |  |  |  | |   Y|  | |  |  __  \n");
+        printf("    Y   Y      /  /_Y  Y   |  . `  | |  | |_ |    |  |Y/|  |   Y_    _/   |  |  |  | |  . `  | |  | |_ | \n");
+        printf(".----)   |    /  _____  Y  |  |Y   | |  |__| |    |  |  |  |     |  |     |  `--'  | |  |Y   | |  |__| | \n");
+        printf("|_______/    /__/     Y__Y |__| Y__|  Y______|    |__|  |__|     |__|      Y______/  |__| Y__|  Y______| \n");
+        printf("                                                                                                         \n");
+
+        printf("  _______      ___       __          ___       _______      ___      \n");
+        printf(" /  _____|    /   Y     |  |        /   Y     /  _____|    /   Y     \n");
+        printf("|  |  __     /  ^  Y    |  |       /  ^  Y   |  |  __     /  ^  Y    \n");
+        printf("|  | |_ |   /  /_Y  Y   |  |      /  /_Y  Y  |  | |_ |   /  /_Y  Y   \n");
+        printf("|  |__| |  /  _____  Y  |  `----./  _____  Y |  |__| |  /  _____  Y  \n");
+        printf(" Y______| /__/     Y__Y |_______/__/     Y__Y Y______| /__/     Y__Y \n");
+
+        printf("                         \n");
+        printf("*******************************\n");
+        printf("*          1.게임시작         *\n");
+        printf("*          2.게임방법         *\n");
+        printf("*          3.끝내기           *\n");
+        printf("*******************************\n");
+        scanf_s("%d", &a);
+    k:
+        if (a == 1) {
+            printf("게임을 시작하겠습니다");
+            system("cls");
+            PlaySound(NULL, 0, 0); // 노래 종료
+            playgame();
+            break;
+        }
+        else if (a == 2)
+            help();
+        else if (a == 3)
+        {
+            break;
+            exit(0);
+        }
+        else {
+            printf("잘못된 숫자를 누르셨습니다. 다시한번 더 입력해주세요.\n");
+            scanf_s("%d", &a);
+            goto k;
+        }
+    }
+}
+
+void draw_rectangle(int r, int c)
+{
+
+    int i, j;
+
+    unsigned char a = 0xa6, b[7];
+
+
+
+    for (i = 1; i < 7; i++)
+
+        b[i] = 0xa0 + i;
+
+    printf("%c%c", a, b[3]);
+
+    for (i = 0; i < c; i++)
+
+        printf("%c%c", a, b[1]);
+
+
+
+    printf("%c%c", a, b[4]);
+
+    printf("\n");
+
+    for (i = 0; i < r; i++)
+
+    {
+
+        printf("%c%c", a, b[2]);
+
+        for (j = 0; j < c; j++)
+
+            printf(" ");
+
+        printf("%c%c", a, b[2]);
+
+        printf("\n");
+
+    }
+
+    printf("%c%c", a, b[6]);
+
+    for (i = 0; i < c; i++)
+
+        printf("%c%c", a, b[1]);
+
+    printf("%c%c", a, b[5]);
+
+    printf("\n");
+
+}
+
+//기존 단순 좌우 이동에서 kbhit과 getch 그리고 IsKeyDown 함수를 따로 선언해 키보드 입력을 받아 움직인다.
+//플레이어의 이동과 적의 생성 그리고 피격 까지 모두 main함수 안에 선언
+//게임이 작동되는 방식을 구조체를 따로 선언하여 전역변수로 활용
+
+
 
 void main()
 {
     menu();
     //draw_ractangle(76,23);
-    playgame();
+    //playgame();
 }
