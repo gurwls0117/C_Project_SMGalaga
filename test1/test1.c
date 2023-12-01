@@ -13,7 +13,7 @@
 //오락실 처럼 이니셜을 부여해서 각각의 이니셜과 점수를 txt로 저장 및 열람 기능
 //점수 순위를 내림차순으로 5위까지 보여줌
 //우리가 1945를 왜 재밌게 했었지? 필살기가 존재했기 때문이지 ## 필살기 한번 고민해보자 ## => 필살기를 충전식으로 하는건 어떨까? 어떤 키를 누르면 써지는거지
-//BGM도 넣어보자 => 상황에 맞게 발사소리 플레이BGM 전부 다
+//BGM도 넣어보자 => 상황에 맞게 발사소리 플레이BGM 전부 다(OK)
 //총알이나 배경 등등의 UI도 고려를 해보자
 
 
@@ -21,8 +21,7 @@ MCI_OPEN_PARMS openBgm;
 MCI_PLAY_PARMS playBgm;
 MCI_OPEN_PARMS openShuffleSound;
 MCI_PLAY_PARMS playShuffleSound;
-#define BGM "C:\\BGM.mp3"    //BGM 경로 지정
-#define SHUFFLE "C:\\rokman.mp3"    //효과음 경로 지정
+#define GUN "C:\\gun.mp3"    //효과음 경로 지정
 int dwID;
 
 #pragma warning (disable : 4996)
@@ -30,29 +29,40 @@ int dwID;
 #define ESC 27
 #define MAXENEMY 10
 #define MAXBALL 20
+#define MAXITEM 2
 
 int fx;
 int bx, by; //총알의 x축 y축 변수 
 int Score; //점수 
 
+enum ColorType {
+    BLACK,  	//0
+    darkBLUE,	//1
+    DarkGreen,	//2
+    darkSkyBlue,    //3
+    DarkRed,  	//4
+    DarkPurple,	//5
+    DarkYellow,	//6
+    GRAY,		//7
+    DarkGray,	//8
+    BLUE,		//9
+    GREEN,		//10
+    SkyBlue,	//11
+    RED,		//12
+    PURPLE,		//13
+    YELLOW,		//14
+    WHITE		//15
+} COLOR;
 
-//음악재생을 위한 함수
-void playingBgm(void) {
-    openBgm.lpstrElementName = BGM;            //파일 오픈
-    openBgm.lpstrDeviceType = "mpegvideo";    //mp3 형식
-    mciSendCommand(0, MCI_OPEN, MCI_OPEN_ELEMENT | MCI_OPEN_TYPE, (DWORD)(LPVOID)&openBgm);
-    dwID = openBgm.wDeviceID;
-    mciSendCommand(dwID, MCI_PLAY, MCI_DGV_PLAY_REPEAT, (DWORD)(LPVOID)&openBgm);    //음악 반복 재생
-}
 
 //효과음 재생을 위한 함수
-void playingShuffleSound(void) {
-    openShuffleSound.lpstrElementName = SHUFFLE;    //파일 오픈
+void playGunSound(void) {
+    openShuffleSound.lpstrElementName = GUN;    //파일 오픈
     openShuffleSound.lpstrDeviceType = "mpegvideo";    //mp3 형식
-    mciSendCommand(0, MCI_OPEN, MCI_OPEN_ELEMENT | MCI_OPEN_TYPE, (DWORD)(LPVOID)&openShuffleSound);
+    mciSendCommand(NULL, MCI_OPEN, MCI_OPEN_ELEMENT | MCI_OPEN_TYPE, (DWORD)(LPVOID)&openShuffleSound);
     dwID = openShuffleSound.wDeviceID;
     mciSendCommand(dwID, MCI_PLAY, MCI_NOTIFY, (DWORD)(LPVOID)&openShuffleSound);    //음악을 한 번 재생
-    Sleep(1800);    //효과음이 재생될 때까지 정지했다가
+    //Sleep(1800);    //효과음이 재생될 때까지 정지했다가
     mciSendCommand(dwID, MCI_SEEK, MCI_SEEK_TO_START, (DWORD)(LPVOID)NULL);    //음원 재생 위치를 처음으로 초기화
 }
 
@@ -64,6 +74,9 @@ void gotoxy(int x, int y)
     SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), Pos);
 }
 
+void textcolor(int colorNum) {
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), colorNum);
+}
 
 void CursorView(char show)//커서숨기기
 {
@@ -89,6 +102,14 @@ struct tag_Enemy
     int nStay;
 }Enemy[MAXENEMY];
 
+struct tag_item
+{
+    BOOL exist;
+    int x, y;
+    int nFrame;
+    int nStay;
+}item[MAXITEM];
+
 
 struct tag_Ball
 {
@@ -99,6 +120,8 @@ struct tag_Ball
 }Ball[MAXBALL];
 
 const char* arEnemy[] = { " <-=-> " ," @##3##@ ", " <<+=+>> ", " <_=@=_> " };
+const char* aritem[] = { " [50] " };
+
 
 BOOL IsKeyDown(int Key)
 {
@@ -108,9 +131,28 @@ BOOL IsKeyDown(int Key)
 void help() {//도움말
     system("cls");
     gotoxy(19, 17); printf("적이 왼쪽과 오른쪽에서 등장합니다.");
-    gotoxy(13, 19); printf("등장한 적은 플레이어를 공격합니다. 피하세요!");
-    gotoxy(11, 21); printf("스페이스바를 이용하여 적을 공격하십시오");
+    gotoxy(13, 19); printf("     등장한 적은 플레이어를 공격합니다. 피하세요!");
+    gotoxy(11, 21); printf("     스페이스바를 이용하여 적을 공격하십시오");
     gotoxy(12, 23); system("pause");
+}
+
+void fire()
+{
+    if (bx != -1)//플레이어의 총알 이동 및 출력
+    {
+        gotoxy(bx, by);
+        putch(' ');
+        if (by == 0)
+        {
+            bx = -1;
+        }
+        else
+        {
+            by--;// by의 위치값을 하나씩 줄여가면(y축값) 올라간다.
+            gotoxy(bx, by);
+            printf("↑");
+        }
+    }
 }
 
 void playgame()
@@ -211,9 +253,9 @@ void playgame()
                 Enemy[i].exist = TRUE;
             }
         }
-
+        fire();
         // 아군 총알 이동 및 출력
-        if (bx != -1)//플레이어의 총알 이동 및 출력
+        /*if (bx != -1)//플레이어의 총알 이동 및 출력
         {
             gotoxy(bx, by);
             putch(' ');
@@ -224,10 +266,12 @@ void playgame()
             else
             {
                 by--;// by의 위치값을 하나씩 줄여가면(y축값) 올라간다.
+                textcolor(RED);
                 gotoxy(bx, by);
                 printf("↑");
             }
         }
+        */
 
         // 적군과 아군 총알의 충돌 판정
         for (i = 0; i < MAXENEMY; i++)
@@ -241,7 +285,7 @@ void playgame()
                 bx = -1;
                 Enemy[i].exist = FALSE;// i번째 배열의 적의 존재를 거짓으로 바꾼다.
                 gotoxy(Enemy[i].x - 3, Enemy[i].y);//적의 x축을 -3만큼 이동시키고
-                puts("       ");// 공백을 집어넣어 적의 자리에 공백을 집어넣는다.(==지워버린다.)
+                puts("         ");// 공백을 집어넣어 적의 자리에 공백을 집어넣는다.(==지워버린다.)
                 Score += 7 - Enemy[i].nFrame;//스코어를 7에서 적의 Frame만큼의 이동속도를 뺀 만큼을 더한다. =>빠를수록 프레임이 작다.(즉, 점수가 높다)
 
                 break;
@@ -267,6 +311,29 @@ void playgame()
                 {
                     Ball[i].y++;// 총알의 y축을 1씩 증가시키며
                     gotoxy(Ball[i].x, Ball[i].y); putch('Y');//Y모양의 총알이 내려온다.
+                }
+            }
+        }
+
+        //아이템을 드랍하는 부분
+        for (i = 0; i < MAXITEM; i++) // 적의 총알을 발사하는 부분
+        {
+            if (item[i].exist == FALSE) //적의 총알의 존재가 거짓이면(없으면) 그대로 진행
+                continue;
+
+            if (--item[i].nStay == 0) //배열에 감소 연산자 
+            {
+                item[i].nStay = item[i].nFrame;
+                gotoxy(item[i].x, item[i].y); putch(' ');
+
+                if (item[i].y >= 23)//적의 총알의 개수가 23개보다 많거나 같아지면
+                {
+                    item[i].exist = FALSE;//존재를 거짓으로 바꾼다.
+                }
+                else//그게 아니라면
+                {
+                    item[i].y++;// 총알의 y축을 1씩 증가시키며
+                    gotoxy(item[i].x, item[i].y); putch('[50]');//Y모양의 총알이 내려온다.
                 }
             }
         }
@@ -388,64 +455,9 @@ void menu() { // 메뉴 고르기
     }
 }
 
-void draw_rectangle(int r, int c)
-{
-
-    int i, j;
-
-    unsigned char a = 0xa6, b[7];
-
-
-
-    for (i = 1; i < 7; i++)
-
-        b[i] = 0xa0 + i;
-
-    printf("%c%c", a, b[3]);
-
-    for (i = 0; i < c; i++)
-
-        printf("%c%c", a, b[1]);
-
-
-
-    printf("%c%c", a, b[4]);
-
-    printf("\n");
-
-    for (i = 0; i < r; i++)
-
-    {
-
-        printf("%c%c", a, b[2]);
-
-        for (j = 0; j < c; j++)
-
-            printf(" ");
-
-        printf("%c%c", a, b[2]);
-
-        printf("\n");
-
-    }
-
-    printf("%c%c", a, b[6]);
-
-    for (i = 0; i < c; i++)
-
-        printf("%c%c", a, b[1]);
-
-    printf("%c%c", a, b[5]);
-
-    printf("\n");
-
-}
-
 //기존 단순 좌우 이동에서 kbhit과 getch 그리고 IsKeyDown 함수를 따로 선언해 키보드 입력을 받아 움직인다.
 //플레이어의 이동과 적의 생성 그리고 피격 까지 모두 main함수 안에 선언
 //게임이 작동되는 방식을 구조체를 따로 선언하여 전역변수로 활용
-
-
 
 void main()
 {
